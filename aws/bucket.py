@@ -1,5 +1,6 @@
 import os
 import base64
+import requests
 import boto3
 from dotenv import load_dotenv
 from exeptions import SettingEnvNotFound
@@ -25,7 +26,7 @@ class Bucket():
             aws_secret_access_key = self.AccessKey
         )
         
-    def DownloadItem(self, FileName: str, ExpiresIn: int):
+    def GetItemURL(self, FileName: str, ExpiresIn: int):
         return self.Client.generate_presigned_url(
             ClientMethod='get_object', 
             Params={'Bucket': self.BucketName, 'Key': FileName},
@@ -33,12 +34,12 @@ class Bucket():
         )
     
     def UploadItem(self, Base64File, FileName: str, Metadata_:dict = {}):
-        
         try:
             DecodedFile = base64.b64decode(Base64File)
         except Exception:
             DecodedFile = Base64File
-            
         return self.Client.put_object(Body=DecodedFile, Bucket=self.BucketName, Key=FileName, Metadata=Metadata_)
     
-
+    def DownloadItem(self, FileName:str):
+        response = requests.get(self.GetItemURL(FileName, 8600), stream=True)
+        return response.content
